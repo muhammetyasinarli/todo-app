@@ -1,28 +1,64 @@
+
 import 'intl-pluralrules';
 import './lang/i18n'
-
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Platform, KeyboardAvoidingView, StyleSheet, Text, View, TextInput, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
 import Task from './components/Task';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage'i import ediyoruz
+
 
 export default function App() {
   const { t } = useTranslation();
   const [task, setTask] = useState();
   const [taskItems, setTaskItems] = useState([]);
 
+  // Component ilk yüklendiğinde AsyncStorage'den verileri yükle
+  useEffect(() => {
+    loadTasks();
+  }, []);
+
+  // AsyncStorage'den görevleri yükle
+  const loadTasks = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (storedTasks !== null) {
+        setTaskItems(JSON.parse(storedTasks));
+      }
+    } catch (error) {
+      console.error('Error loading tasks from AsyncStorage:', error);
+    }
+  };
+
+  // AsyncStorage'e görev ekle
+  const saveTask = async (newTask) => {
+    try {
+      const updatedTasks = [...taskItems, newTask];
+      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      setTaskItems(updatedTasks);
+    } catch (error) {
+      console.error('Error saving task to AsyncStorage:', error);
+    }
+  };
+
   const handleAddTask = () => {
     Keyboard.dismiss();
-    setTaskItems([...taskItems, task])
-    setTask(null);
-  }
+    if (task) {
+      saveTask(task);
+      setTask(null);
+    }
+  };
 
-  const completeTask = (index) => {
+  const completeTask = async (index) => {
     let itemsCopy = [...taskItems];
     itemsCopy.splice(index, 1);
-    setTaskItems(itemsCopy)
-  }
+    try {
+      await AsyncStorage.setItem('tasks', JSON.stringify(itemsCopy));
+      setTaskItems(itemsCopy);
+    } catch (error) {
+      console.error('Error updating tasks in AsyncStorage:', error);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -35,24 +71,25 @@ export default function App() {
         <View style={styles.tasksWrapper}>
           <Text style={styles.sectionTitle}>{t('todaysTasks')}</Text>
           <View style={styles.items}>
-            {
-              taskItems.map((item, index) => {
-                return (
-                  <TouchableOpacity key={index} onPress={() => completeTask(index)}>
-                    <Task text={item} />
-                  </TouchableOpacity>
-                )
-              })
-            }
+            {taskItems.map((item, index) => (
+              <TouchableOpacity key={index} onPress={() => completeTask(index)}>
+                <Task text={item} />
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
       </ScrollView>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.writeTaskWrapper}
       >
-        <TextInput style={styles.input} placeholder={t('addProduct')} value={task} onChangeText={text => setTask(text)} />
-        <TouchableOpacity onPress={() => handleAddTask()}>
+        <TextInput
+          style={styles.input}
+          placeholder={t('addProduct')}
+          value={task}
+          onChangeText={(text) => setTask(text)}
+        />
+        <TouchableOpacity onPress={handleAddTask}>
           <View style={styles.addWrapper}>
             <Text style={styles.addText}>+</Text>
           </View>
@@ -73,7 +110,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
   },
   items: {
     marginTop: 30,
@@ -84,7 +121,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    alignItems: 'center'
+    alignItems: 'center',
   },
   input: {
     paddingVertical: 15,
