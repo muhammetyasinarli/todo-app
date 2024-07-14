@@ -1,5 +1,5 @@
 import 'intl-pluralrules';
-import './lang/i18n'
+import './lang/i18n';
 import React, { useState, useEffect } from 'react';
 import { Platform, KeyboardAvoidingView, StyleSheet, Text, View, TextInput, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
 import Task from './components/Task';
@@ -9,10 +9,11 @@ import moment from 'moment'; // Tarih işlemleri için moment.js kullanıyoruz
 
 export default function App() {
   const { t } = useTranslation();
-  const [task, setTask] = useState();
+  const [task, setTask] = useState('');
   const [taskItems, setTaskItems] = useState([]);
   const [todayTasks, setTodayTasks] = useState([]);
   const [pastTasks, setPastTasks] = useState([]);
+  const [showPastTasks, setShowPastTasks] = useState(false); // Geçmiş görevleri göstermek için state ekledik
 
   // Component ilk yüklendiğinde AsyncStorage'den verileri yükle
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function App() {
     if (task) {
       const newTask = { text: task, date: new Date() };
       saveTask(newTask);
-      setTask(null);
+      setTask('');
     }
   };
 
@@ -76,6 +77,10 @@ export default function App() {
     }
   };
 
+  const toggleShowPastTasks = () => {
+    setShowPastTasks(!showPastTasks);
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -85,16 +90,20 @@ export default function App() {
         keyboardShouldPersistTaps='handled'
       >
         <View style={styles.tasksWrapper}>
-          <Text style={styles.sectionTitle}>{t('todaysTasks')}</Text>
-          <View style={styles.items}>
-            {todayTasks.map((item, index) => (
-              <TouchableOpacity key={index} onPress={() => completeTask(index, 'today')}>
-                <Task text={item.text} />
-              </TouchableOpacity>
-            ))}
-          </View>
+          {!showPastTasks && (
+            <>
+              <Text style={styles.sectionTitle}>{t('todaysTasks')}</Text>
+              <View style={styles.items}>
+                {todayTasks.map((item, index) => (
+                  <TouchableOpacity key={index} onPress={() => completeTask(index, 'today')}>
+                    <Task text={item.text} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
-          {pastTasks.length > 0 && (
+          {showPastTasks && (
             <>
               <Text style={styles.sectionTitle}>{t('pastTasks')}</Text>
               <View style={styles.items}>
@@ -106,6 +115,7 @@ export default function App() {
               </View>
             </>
           )}
+
         </View>
       </ScrollView>
       <KeyboardAvoidingView
@@ -124,6 +134,15 @@ export default function App() {
           </View>
         </TouchableOpacity>
       </KeyboardAvoidingView>
+
+      {/* Ekranın en altında showPastTasks ve hidePastTasks butonları */}
+      <View style={styles.bottomButtons}>
+        <TouchableOpacity onPress={toggleShowPastTasks} style={styles.bottomButton}>
+          <Text style={styles.bottomButtonText}>
+            {showPastTasks ? t('hidePastTasks') : t('showPastTasks')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -172,4 +191,36 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   addText: {},
+  toggleButton: {
+    marginTop: 20,
+    padding: 10,
+    backgroundColor: '#6EB5E5',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  toggleButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+  },
+  bottomButtons: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
+    right: 20,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  bottomButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#6EB5E5',
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 10,
+    width: '100%',
+  },
+  bottomButtonText: {
+    color: '#FFF',
+    fontSize: 10,
+  },
 });
