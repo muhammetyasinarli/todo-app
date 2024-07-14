@@ -14,13 +14,13 @@ i18n
       en: {
         translation: {
           "addProduct": "Write a task",
-          "todaysTasks": "Today's tasks",
+          "todaysTasks": "My Tasks",
         }
       },
       tr: {
         translation: {
           "addProduct": "Görev Yaz",
-          "todaysTasks": "Bugünün görevleri",
+          "todaysTasks": "Görevlerim",
         }
       }
     }
