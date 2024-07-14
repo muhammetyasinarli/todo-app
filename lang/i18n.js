@@ -15,12 +15,14 @@ i18n
         translation: {
           "addProduct": "Write a task",
           "todaysTasks": "My Tasks",
+          "pastTasks" : "Past Tasks"
         }
       },
       tr: {
         translation: {
           "addProduct": "Görev Yaz",
           "todaysTasks": "Görevlerim",
+          "pastTasks" : "Geçmiş Görevlerim"
         }
       }
     }

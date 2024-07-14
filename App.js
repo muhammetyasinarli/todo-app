@@ -1,4 +1,3 @@
-
 import 'intl-pluralrules';
 import './lang/i18n'
 import React, { useState, useEffect } from 'react';
@@ -6,12 +5,14 @@ import { Platform, KeyboardAvoidingView, StyleSheet, Text, View, TextInput, Touc
 import Task from './components/Task';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage'i import ediyoruz
-
+import moment from 'moment'; // Tarih işlemleri için moment.js kullanıyoruz
 
 export default function App() {
   const { t } = useTranslation();
   const [task, setTask] = useState();
   const [taskItems, setTaskItems] = useState([]);
+  const [todayTasks, setTodayTasks] = useState([]);
+  const [pastTasks, setPastTasks] = useState([]);
 
   // Component ilk yüklendiğinde AsyncStorage'den verileri yükle
   useEffect(() => {
@@ -23,11 +24,23 @@ export default function App() {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
       if (storedTasks !== null) {
-        setTaskItems(JSON.parse(storedTasks));
+        const tasks = JSON.parse(storedTasks);
+        setTaskItems(tasks);
+        filterTasks(tasks);
       }
     } catch (error) {
       console.error('Error loading tasks from AsyncStorage:', error);
     }
+  };
+
+  // Görevleri tarihe göre ayır
+  const filterTasks = (tasks) => {
+    const today = moment().startOf('day');
+    const todayTasks = tasks.filter(task => moment(task.date).isSame(today, 'day'));
+    const pastTasks = tasks.filter(task => !moment(task.date).isSame(today, 'day'));
+
+    setTodayTasks(todayTasks);
+    setPastTasks(pastTasks);
   };
 
   // AsyncStorage'e görev ekle
@@ -36,6 +49,7 @@ export default function App() {
       const updatedTasks = [...taskItems, newTask];
       await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
       setTaskItems(updatedTasks);
+      filterTasks(updatedTasks);
     } catch (error) {
       console.error('Error saving task to AsyncStorage:', error);
     }
@@ -44,17 +58,19 @@ export default function App() {
   const handleAddTask = () => {
     Keyboard.dismiss();
     if (task) {
-      saveTask(task);
+      const newTask = { text: task, date: new Date() };
+      saveTask(newTask);
       setTask(null);
     }
   };
 
-  const completeTask = async (index) => {
+  const completeTask = async (index, taskType) => {
     let itemsCopy = [...taskItems];
     itemsCopy.splice(index, 1);
     try {
       await AsyncStorage.setItem('tasks', JSON.stringify(itemsCopy));
       setTaskItems(itemsCopy);
+      filterTasks(itemsCopy);
     } catch (error) {
       console.error('Error updating tasks in AsyncStorage:', error);
     }
@@ -71,12 +87,25 @@ export default function App() {
         <View style={styles.tasksWrapper}>
           <Text style={styles.sectionTitle}>{t('todaysTasks')}</Text>
           <View style={styles.items}>
-            {taskItems.map((item, index) => (
-              <TouchableOpacity key={index} onPress={() => completeTask(index)}>
-                <Task text={item} />
+            {todayTasks.map((item, index) => (
+              <TouchableOpacity key={index} onPress={() => completeTask(index, 'today')}>
+                <Task text={item.text} />
               </TouchableOpacity>
             ))}
           </View>
+
+          {pastTasks.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>{t('pastTasks')}</Text>
+              <View style={styles.items}>
+                {pastTasks.map((item, index) => (
+                  <TouchableOpacity key={index} onPress={() => completeTask(index, 'past')}>
+                    <Task text={item.text} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
         </View>
       </ScrollView>
       <KeyboardAvoidingView
