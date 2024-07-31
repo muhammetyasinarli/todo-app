@@ -4,23 +4,20 @@ import React, { useState, useEffect } from 'react';
 import { Platform, KeyboardAvoidingView, StyleSheet, Text, View, TextInput, TouchableOpacity, Keyboard, ScrollView } from 'react-native';
 import Task from './components/Task';
 import { useTranslation } from 'react-i18next';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage'i import ediyoruz
-import moment from 'moment'; // Tarih işlemleri için moment.js kullanıyoruz
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 
 export default function App() {
   const { t } = useTranslation();
   const [task, setTask] = useState('');
   const [taskItems, setTaskItems] = useState([]);
   const [todayTasks, setTodayTasks] = useState([]);
-  const [pastTasks, setPastTasks] = useState([]);
-  const [showPastTasks, setShowPastTasks] = useState(false); // Geçmiş görevleri göstermek için state ekledik
+  const [inputFocused, setInputFocused] = useState(false); // Yeni state
 
-  // Component ilk yüklendiğinde AsyncStorage'den verileri yükle
   useEffect(() => {
     loadTasks();
   }, []);
 
-  // AsyncStorage'den görevleri yükle
   const loadTasks = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
@@ -34,7 +31,6 @@ export default function App() {
     }
   };
 
-  // Görevleri tarihe göre ayır
   const filterTasks = (tasks) => {
     const today = moment().startOf('day');
     const todayTasks = tasks.filter(task => moment(task.date).isSame(today, 'day'));
@@ -44,7 +40,6 @@ export default function App() {
     setPastTasks(pastTasks);
   };
 
-  // AsyncStorage'e görev ekle
   const saveTask = async (newTask) => {
     try {
       const updatedTasks = [...taskItems, newTask];
@@ -77,10 +72,6 @@ export default function App() {
     }
   };
 
-  const toggleShowPastTasks = () => {
-    setShowPastTasks(!showPastTasks);
-  };
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -90,7 +81,7 @@ export default function App() {
         keyboardShouldPersistTaps='handled'
       >
         <View style={styles.tasksWrapper}>
-          {!showPastTasks && (
+
             <>
               <Text style={styles.sectionTitle}>{t('todaysTasks')}</Text>
               <View style={styles.items}>
@@ -101,21 +92,6 @@ export default function App() {
                 ))}
               </View>
             </>
-          )}
-
-          {showPastTasks && (
-            <>
-              <Text style={styles.sectionTitle}>{t('pastTasks')}</Text>
-              <View style={styles.items}>
-                {pastTasks.map((item, index) => (
-                  <TouchableOpacity key={index} onPress={() => completeTask(index, 'past')}>
-                    <Task text={item.text} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </>
-          )}
-
         </View>
       </ScrollView>
       <KeyboardAvoidingView
@@ -123,10 +99,12 @@ export default function App() {
         style={styles.writeTaskWrapper}
       >
         <TextInput
-          style={styles.input}
+          style={inputFocused ? styles.inputFocused : styles.input} // Şartlı stil kullanımı
           placeholder={t('addProduct')}
           value={task}
           onChangeText={(text) => setTask(text)}
+          onFocus={() => setInputFocused(true)} // Odaklanma olayı
+          onBlur={() => setInputFocused(false)} // Odaklanma kaldırılma olayı
         />
         <TouchableOpacity onPress={handleAddTask}>
           <View style={styles.addWrapper}>
@@ -134,15 +112,6 @@ export default function App() {
           </View>
         </TouchableOpacity>
       </KeyboardAvoidingView>
-
-      {/* Ekranın en altında showPastTasks ve hidePastTasks butonları */}
-      <View style={styles.bottomButtons}>
-        <TouchableOpacity onPress={toggleShowPastTasks} style={styles.bottomButton}>
-          <Text style={styles.bottomButtonText}>
-            {showPastTasks ? t('hidePastTasks') : t('showPastTasks')}
-          </Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 }
@@ -178,7 +147,18 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     borderColor: '#C0C0C0',
     borderWidth: 1,
-    width: 250,
+    width: '50%',
+    // height: 50,
+  },
+  inputFocused: {
+    paddingVertical: 15,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFF',
+    borderRadius: 60,
+    borderColor: '#C0C0C0',
+    borderWidth: 1,
+    width: '75%',
+    // height: 70,
   },
   addWrapper: {
     width: 60,
@@ -191,17 +171,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   addText: {},
-  toggleButton: {
-    marginTop: 20,
-    padding: 10,
-    backgroundColor: '#6EB5E5',
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  toggleButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-  },
   bottomButtons: {
     position: 'absolute',
     bottom: 20,

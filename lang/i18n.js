@@ -13,8 +13,8 @@ i18n
     resources: {
       en: {
         translation: {
-          "addProduct": "Write a task",
-          "todaysTasks": "My Tasks",
+          "addProduct": "Write a note",
+          "todaysTasks": "My Notes",
           "pastTasks" : "Past Tasks",
           "hidePastTasks" : "Hide Past",
           "showPastTasks" : "Show Past"
@@ -22,8 +22,8 @@ i18n
       },
       tr: {
         translation: {
-          "addProduct": "Görev Yaz",
-          "todaysTasks": "Görevlerim",
+          "addProduct": "Not Yaz",
+          "todaysTasks": "Notlarım",
           "pastTasks" : "Geçmiş Görevlerim",
           "hidePastTasks" : "Geçmişi Gizle",
           "showPastTasks" : "Geçmişi Göster"
