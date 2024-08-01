@@ -37,7 +37,6 @@ export default function App() {
     const pastTasks = tasks.filter(task => !moment(task.date).isSame(today, 'day'));
 
     setTodayTasks(todayTasks);
-    setPastTasks(pastTasks);
   };
 
   const saveTask = async (newTask) => {
